@@ -2452,24 +2452,24 @@
                 const chips = sections.map(s => {
                     const st = styles[s.status] || styles.Pending;
                     return `
-                        <div style="display:flex; align-items:center; gap:8px; padding:9px 12px; background:${st.bg}; border:1.5px solid ${st.border}; border-radius:9px;">
-                            <i class="bi ${st.icon}" style="color:${st.iconColor}; font-size:18px; line-height:1;"></i>
-                            <span style="font-weight:700; color:${st.color}; font-size:14px;">${s.section}</span>
+                        <div style="display:flex; align-items:center; gap:9px; padding:10px 13px; background:${st.bg}; border:1.5px solid ${st.border}; border-radius:9px;">
+                            <i class="bi ${st.icon}" style="color:${st.iconColor}; font-size:20px; line-height:1;"></i>
+                            <span style="font-weight:700; color:${st.color}; font-size:16px;">${s.section}</span>
                         </div>`;
                 }).join('');
 
                 return `
                     <div style="background:#fff; border:1px solid #cfdcf0; border-radius:12px; margin-bottom:14px; overflow:hidden;">
-                        <div style="display:flex; align-items:center; justify-content:space-between; padding:11px 18px; background:#eaf1fb; border-bottom:1px solid #cfdcf0;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <span style="background:#0848a0; color:#fff; font-weight:800; font-size:13px; letter-spacing:0.6px; padding:5px 12px; border-radius:7px;">GRADE ${grade}</span>
-                                <span style="color:#475569; font-size:12px; font-weight:600;">${countLabel}</span>
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 20px; background:#eaf1fb; border-bottom:1px solid #cfdcf0;">
+                            <div style="display:flex; align-items:center; gap:14px;">
+                                <span style="background:linear-gradient(135deg, #062f6e 0%, #0848a0 100%); color:#fff; font-weight:800; font-size:26px; letter-spacing:1px; padding:8px 22px; border-radius:10px; line-height:1.2;">GRADE ${grade}</span>
+                                <span style="color:#475569; font-size:15px; font-weight:600;">${countLabel}</span>
                             </div>
-                            <div style="display:flex; align-items:center; gap:12px;">
-                                <div style="width:140px; height:8px; background:#cfdcf0; border-radius:8px; overflow:hidden;">
-                                    <div style="width:${pct}%; height:8px; background:${allDone ? '#16a34a' : '#0848a0'}; border-radius:8px;"></div>
+                            <div style="display:flex; align-items:center; gap:14px;">
+                                <div style="width:160px; height:10px; background:#cfdcf0; border-radius:10px; overflow:hidden;">
+                                    <div style="width:${pct}%; height:10px; background:${allDone ? '#16a34a' : '#0848a0'}; border-radius:10px;"></div>
                                 </div>
-                                <span style="font-size:12px; font-weight:700; color:${allDone ? '#14653a' : '#062f6e'}; min-width:92px; text-align:right;">${done}/${gradeAll.length} Completed</span>
+                                <span style="font-size:16px; font-weight:800; color:${allDone ? '#14653a' : '#062f6e'}; min-width:128px; text-align:right;">${done}/${gradeAll.length} Completed</span>
                             </div>
                         </div>
                         <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:9px; padding:14px 16px;">
@@ -2507,7 +2507,7 @@
                                     <div style="font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#ffc27a; margin-bottom:4px;">Marks Submission Status Report</div>
                                     <h1 style="font-size:28px; font-weight:800; margin:0; letter-spacing:-0.3px; line-height:1.2;">${SCHOOL}</h1>
                                     <div style="font-size:16px; font-weight:500; margin-top:4px; opacity:0.95;">Quarter Marks Upload Tracker</div>
-                                    <div style="display:inline-block; margin-top:9px; padding:4px 12px; background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.35); border-radius:20px; font-size:12px; font-weight:600; letter-spacing:0.3px;">${scopeLabel}</div>
+                                    <div style="display:inline-block; margin-top:12px; padding:7px 18px; background:rgba(255,255,255,0.20); border:1.5px solid rgba(255,255,255,0.5); border-radius:24px; font-size:18px; font-weight:800; letter-spacing:0.4px;">${scopeLabel}</div>
                                 </div>
                             </div>
                             <div style="text-align:right; flex-shrink:0;">
