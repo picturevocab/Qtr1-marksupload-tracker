@@ -1591,16 +1591,16 @@
                             <input type="number" id="mgGrade" min="1" max="12" placeholder="5" oninput="onAddGradeInput()">
                         </div>
                         <div class="field">
-                            <label for="mgSuffix">Section letter</label>
-                            <input type="text" id="mgSuffix" maxlength="4" placeholder="L" autocomplete="off" oninput="onAddSuffixInput()">
+                            <label for="mgSuffix">Section letter(s)</label>
+                            <input type="text" id="mgSuffix" maxlength="40" placeholder="L   or   A-H   or   A,B,C" autocomplete="off" oninput="onAddSuffixInput()">
                         </div>
                     </div>
                     <div class="new-name-preview">
-                        <span>New section name</span>
+                        <span id="mgPreviewLabel">New section name</span>
                         <strong id="mgPreview">&ndash;</strong>
                     </div>
                     <div class="existing-list" id="mgExisting"></div>
-                    <div class="hint-text">New sections start as <strong>Pending</strong>. A grade that doesn't exist yet (for example 7) is created automatically.</div>
+                    <div class="hint-text">Add one section (<strong>L</strong>), a range (<strong>A-H</strong>) or a list (<strong>A,B,C</strong>). New sections start as <strong>Pending</strong>. A grade that doesn't exist yet, such as 7, is created automatically.</div>
                 </div>
 
                 <div id="panelRemove" style="display: none;">
@@ -1806,11 +1806,43 @@
             return '';
         }
 
-        function newSectionName() {
+        function parseSuffixes(raw) {
+            const parts = raw.toUpperCase().replace(/\s+/g, '').split(',').filter(Boolean);
+            const out = [];
+            for (const p of parts) {
+                const r = /^([A-Z])-([A-Z])$/.exec(p);
+                if (r) {
+                    const from = r[1].charCodeAt(0), to = r[2].charCodeAt(0);
+                    if (from > to) return { error: 'A range must go in order, like A-H.' };
+                    for (let c = from; c <= to; c++) out.push(String.fromCharCode(c));
+                } else if (/^[A-Z][A-Z0-9]{0,3}$/.test(p)) {
+                    out.push(p);
+                } else {
+                    return { error: 'Use a letter like L, a range like A-H, or a list like A,B,C.' };
+                }
+            }
+            const uniq = [...new Set(out)];
+            if (!uniq.length) return { error: 'x' };
+            if (uniq.length > 26) return { error: 'Add at most 26 sections at a time.' };
+            return { suffixes: uniq };
+        }
+
+        // Works out which new sections the form describes. error 'x' = form not filled in yet (stay quiet)
+        function planAdd() {
             const g = parseInt(document.getElementById('mgGrade').value, 10);
-            const suffix = document.getElementById('mgSuffix').value.trim().toUpperCase();
-            if (!g || !suffix) return '';
-            return g + suffix;
+            const raw = document.getElementById('mgSuffix').value;
+            if (!g || !raw.trim()) return { names: [], skipped: [], error: 'x' };
+            if (g < 1 || g > 12) return { names: [], skipped: [], error: 'Enter a grade between 1 and 12.' };
+            const parsed = parseSuffixes(raw);
+            if (parsed.error) return { names: [], skipped: [], error: parsed.error };
+            const wanted = parsed.suffixes.map(sfx => g + sfx);
+            const existing = new Set(allData.map(i => String(i.section).toUpperCase()));
+            const names = wanted.filter(n => !existing.has(n));
+            const skipped = wanted.filter(n => existing.has(n));
+            if (!names.length) {
+                return { names, skipped, error: wanted.length === 1 ? 'Section ' + wanted[0] + ' already exists.' : 'All of these sections already exist.' };
+            }
+            return { names, skipped, error: '' };
         }
 
         function onAddGradeInput() {
@@ -1822,20 +1854,10 @@
 
         function onAddSuffixInput() {
             const inp = document.getElementById('mgSuffix');
-            inp.value = inp.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            inp.value = inp.value.toUpperCase().replace(/[^A-Z0-9,\-\s]/g, '');
             suffixTouched = true;
             showManageMsg('', '');
             renderManage();
-        }
-
-        function validateNewSection() {
-            const g = parseInt(document.getElementById('mgGrade').value, 10);
-            const suffix = document.getElementById('mgSuffix').value.trim().toUpperCase();
-            if (!g || g < 1 || g > 12) return 'Enter a grade between 1 and 12.';
-            if (!/^[A-Z][A-Z0-9]{0,3}$/.test(suffix)) return 'Enter the section letter, for example L.';
-            const name = g + suffix;
-            if (allData.some(i => String(i.section).toUpperCase() === name)) return 'Section ' + name + ' already exists.';
-            return '';
         }
 
         function renderManage() {
@@ -1850,8 +1872,11 @@
             const summary = document.getElementById('manageSummary');
 
             if (isAdd) {
-                const name = newSectionName();
-                document.getElementById('mgPreview').textContent = name || '\u2013';
+                const plan = planAdd();
+                const n = plan.names.length;
+                document.getElementById('mgPreviewLabel').textContent = n > 1 ? 'New sections (' + n + ')' : 'New section name';
+                document.getElementById('mgPreview').textContent = !n ? '\u2013'
+                    : (n <= 3 ? plan.names.join(', ') : plan.names[0] + ' \u2192 ' + plan.names[n - 1]);
                 const g = parseInt(document.getElementById('mgGrade').value, 10);
                 const existing = g ? sectionsOfGrade(g) : [];
                 document.getElementById('mgExisting').innerHTML = g
@@ -1859,10 +1884,16 @@
                         ? 'Grade ' + g + ' currently has: ' + existing.map(s => '<span>' + s + '</span>').join('')
                         : 'Grade ' + g + ' has no sections yet. It will be created.')
                     : '';
-                const err = name ? validateNewSection() : 'x';
-                document.getElementById('addConfirmBtn').disabled = !!err;
-                summary.innerHTML = name && !err ? 'Ready to add <strong>' + name + '</strong>' : '';
-                if (name && err && err !== 'x') summary.innerHTML = '<span style="color:#dc2626">' + err + '</span>';
+                const blocked = !!plan.error;
+                document.getElementById('addConfirmBtn').disabled = blocked;
+                if (!blocked) {
+                    summary.innerHTML = 'Ready to add <strong>' + (n === 1 ? plan.names[0] : n + ' sections') + '</strong>' +
+                        (plan.skipped.length ? ' <span style="color:#9a4a06">(' + plan.skipped.join(', ') + ' already exist, skipped)</span>' : '');
+                } else if (plan.error !== 'x') {
+                    summary.innerHTML = '<span style="color:#dc2626">' + plan.error + '</span>';
+                } else {
+                    summary.innerHTML = '';
+                }
             } else {
                 const grades = [...new Set(allData.map(i => i.grade))].sort((a, b) => a - b);
                 const gradeRow = document.getElementById('rmGradeRow');
@@ -1898,34 +1929,47 @@
         }
 
         async function submitAddSection() {
-            const err = validateNewSection();
-            if (err) { showManageMsg('err', err); return; }
+            const plan = planAdd();
+            if (plan.error) { if (plan.error !== 'x') showManageMsg('err', plan.error); return; }
             const grade = parseInt(document.getElementById('mgGrade').value, 10);
-            const name = newSectionName();
             const btn = document.getElementById('addConfirmBtn');
             const html = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Adding...';
-            showManageMsg('info', 'Adding ' + name + '...');
-            try {
-                const result = await postJson(
-                    { user_id: currentUser.userId, action: 'addSection', grade: grade, section: name },
-                    rows => rows.some(r => String(r.section).toUpperCase() === name)
-                );
-                if (result && result.success) {
-                    await refreshData(true);
-                    suffixTouched = false;
-                    document.getElementById('mgSuffix').value = suggestSuffix(grade);
-                    showManageMsg('ok', 'Section ' + name + ' was added to Grade ' + grade + '.');
-                } else {
-                    showManageMsg('err', (result && result.error) || 'Could not add the section.');
+
+            const added = [];
+            let failure = '';
+            for (let i = 0; i < plan.names.length; i++) {
+                const name = plan.names[i];
+                showManageMsg('info', 'Adding ' + name + ' (' + (i + 1) + ' of ' + plan.names.length + ')...');
+                try {
+                    const result = await postJson(
+                        { user_id: currentUser.userId, action: 'addSection', grade: grade, section: name },
+                        rows => rows.some(r => String(r.section).toUpperCase() === name)
+                    );
+                    if (result && result.success) {
+                        added.push(name);
+                    } else {
+                        failure = name + ': ' + ((result && result.error) || 'could not be added.');
+                        break;
+                    }
+                } catch (e) {
+                    failure = 'Could not reach the server while adding ' + name + '.';
+                    break;
                 }
-            } catch (e) {
-                showManageMsg('err', 'Could not reach the server. Please try again.');
-            } finally {
-                btn.innerHTML = html;
-                renderManage();
             }
+
+            if (added.length) await refreshData(true);
+            suffixTouched = false;
+            document.getElementById('mgSuffix').value = suggestSuffix(grade);
+            const list = added.length > 3 ? added[0] + ' to ' + added[added.length - 1] + ' (' + added.length + ' sections)' : added.join(', ');
+            if (failure) {
+                showManageMsg('err', (added.length ? 'Added ' + list + '. Then stopped: ' : '') + failure);
+            } else {
+                showManageMsg('ok', 'Added ' + list + ' to Grade ' + grade + '.');
+            }
+            btn.innerHTML = html;
+            renderManage();
         }
 
         async function submitRemoveSections() {
