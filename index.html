@@ -933,35 +933,53 @@
         let allData = [];
         let filteredData = [];
 
-        async function fetchWithJsonp(url) {
+        function jsonpRequest(url) {
             return new Promise((resolve, reject) => {
-                const callbackName = 'jsonp_cb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                const timeoutId = setTimeout(() => {
-                    cleanup();
-                    reject(new Error('Request timeout. Make sure the Apps Script is deployed with "Execute as: Me" and "Who has access: Anyone".'));
+                const callbackName = 'jsonp' + Date.now() + Math.floor(Math.random()*1000000);
+                const script = document.createElement('script');
+                let timedOut = false;
+                
+                const timeout = setTimeout(function() {
+                    timedOut = true;
+                    if (window[callbackName]) {
+                        delete window[callbackName];
+                    }
+                    if (script && script.parentNode) {
+                        script.parentNode.removeChild(script);
+                    }
+                    reject(new Error('Request timeout'));
                 }, 20000);
                 
-                window[callbackName] = function(data) {
-                    cleanup();
-                    resolve(data);
-                };
-                
-                function cleanup() {
-                    clearTimeout(timeoutId);
-                    try { delete window[callbackName]; } catch(e) {}
+                window[callbackName] = function(response) {
+                    if (timedOut) return;
+                    clearTimeout(timeout);
+                    delete window[callbackName];
                     if (script && script.parentNode) {
-                        try { document.body.removeChild(script); } catch(e) {}
+                        script.parentNode.removeChild(script);
                     }
-                }
-                
-                const script = document.createElement('script');
-                script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName + '&_=' + Date.now();
-                script.onerror = function(e) {
-                    cleanup();
-                    reject(new Error('Network error loading script'));
+                    resolve(response);
                 };
+                
+                script.onerror = function() {
+                    if (timedOut) return;
+                    clearTimeout(timeout);
+                    if (window[callbackName]) {
+                        delete window[callbackName];
+                    }
+                    if (script && script.parentNode) {
+                        script.parentNode.removeChild(script);
+                    }
+                    reject(new Error('Script failed to load'));
+                };
+                
+                const separator = url.indexOf('?') >= 0 ? '&' : '?';
+                script.src = url + separator + 'callback=' + callbackName;
                 document.body.appendChild(script);
             });
+        }
+
+        async function fetchData(url) {
+            return await jsonpRequest(url);
         }
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -973,10 +991,15 @@
             errorDiv.classList.remove('show');
 
             try {
+                errorDiv.textContent = 'Signing in...';
+                errorDiv.style.color = '#64748b';
+                errorDiv.style.background = '#f1f5f9';
+                errorDiv.style.borderColor = '#cbd5e1';
+                errorDiv.classList.add('show');
+                
                 const url = WEB_APP_URL + '?action=login&user_id=' + encodeURIComponent(userId) + '&password=' + encodeURIComponent(password);
-                console.log('Fetching:', url);
-                const result = await fetchWithJsonp(url);
-                console.log('Result:', result);
+                const result = await fetchData(url);
+                
                 if (result && result.success) {
                     currentUser = result.user;
                     document.getElementById('userName').textContent = currentUser.name;
@@ -987,10 +1010,16 @@
                     loadData();
                 } else {
                     errorDiv.textContent = (result && result.error) || 'Invalid credentials';
+                    errorDiv.style.color = '#ef4444';
+                    errorDiv.style.background = '#fef2f2';
+                    errorDiv.style.borderColor = '#fecaca';
                     errorDiv.classList.add('show');
                 }
             } catch (error) {
-                errorDiv.textContent = 'Error connecting to server: ' + error.message;
+                errorDiv.textContent = 'Cannot connect to server: ' + (error && error.message ? error.message : error) + '. Check that the Apps Script deployment is set to "Anyone" and the URL is the latest /exec URL.';
+                errorDiv.style.color = '#ef4444';
+                errorDiv.style.background = '#fef2f2';
+                errorDiv.style.borderColor = '#fecaca';
                 errorDiv.classList.add('show');
             }
         });
@@ -1001,7 +1030,7 @@
             document.getElementById('trackerTableBody').innerHTML = '';
 
             try {
-                const result = await fetchWithJsonp(WEB_APP_URL + '?user_id=' + encodeURIComponent(currentUser.userId));
+                const result = await fetchData(WEB_APP_URL + '?user_id=' + encodeURIComponent(currentUser.userId));
                 if (result && result.success) {
                     allData = result.data;
                     filteredData = [...allData];
@@ -1011,7 +1040,7 @@
                     alert('Error loading data: ' + (result && result.error ? result.error : 'Unknown error'));
                 }
             } catch (error) {
-                alert('Error connecting to server: ' + error.message);
+                alert('Error connecting to server. Try a different browser.');
             } finally {
                 document.getElementById('loadingState').style.display = 'none';
             }
@@ -1078,12 +1107,27 @@
             button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Updating...';
 
             try {
-                const response = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: currentUser.userId, rowIndex: rowIndex, status: newStatus })
-                });
-                const result = await response.json();
+                const payload = JSON.stringify({ user_id: currentUser.userId, rowIndex: rowIndex, status: newStatus });
+                let result;
+                try {
+                    // text/plain avoids the CORS preflight that Apps Script cannot answer
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: payload
+                    });
+                    result = await response.json();
+                } catch (netErr) {
+                    // Fallback: send blindly, then confirm by re-reading the sheet
+                    await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: payload });
+                    const fresh = await fetchData(WEB_APP_URL + '?user_id=' + encodeURIComponent(currentUser.userId));
+                    const row = fresh && fresh.success ? fresh.data.find(r => r.rowIndex === rowIndex) : null;
+                    if (row && row.status === newStatus) {
+                        result = { success: true, data: row };
+                    } else {
+                        throw netErr;
+                    }
+                }
                 if (result.success) {
                     const itemIndex = allData.findIndex(item => item.rowIndex === rowIndex);
                     if (itemIndex > -1) {
@@ -1095,7 +1139,7 @@
                     alert('Error updating: ' + result.error);
                 }
             } catch (error) {
-                alert('Error connecting to server');
+                alert('Error connecting to server while updating. Please try again.');
             } finally {
                 button.disabled = false;
                 button.innerHTML = originalHTML;
