@@ -1190,6 +1190,144 @@
         @media (max-width: 768px) {
             .table-header-actions { width: 100%; }
         }
+
+        /* ===== Manage sections (admin) ===== */
+        .admin-only { display: none !important; }
+        .admin-mode .admin-only { display: flex !important; }
+
+        .manage-btn {
+            padding: 7px 14px;
+            background: #fff;
+            color: var(--primary);
+            border: 1.5px solid #c9d8ee;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .manage-btn:hover { background: var(--primary-soft); border-color: var(--primary); }
+
+        .tab-row { display: flex; gap: 8px; margin-bottom: 18px; }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1.5px solid var(--border);
+            background: #fff;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            transition: all 0.15s;
+        }
+
+        .tab-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .tab-btn.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .tab-btn.on.remove { background: #dc2626; border-color: #dc2626; }
+
+        .field-row { display: flex; gap: 12px; margin-bottom: 14px; }
+        .field { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+
+        .field label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .field input {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            width: 100%;
+        }
+
+        .field input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(8, 72, 160, 0.15);
+        }
+
+        .new-name-preview {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--primary-soft);
+            border: 1px dashed #9fb9e0;
+            border-radius: 10px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .new-name-preview strong { font-size: 22px; color: var(--primary-dark); letter-spacing: 0.5px; }
+
+        .existing-list { font-size: 12px; color: var(--text-tertiary); margin-bottom: 16px; line-height: 1.7; }
+        .existing-list span {
+            display: inline-block;
+            padding: 1px 8px;
+            margin: 0 3px 3px 0;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .chip.rm.on { background: #dc2626; border-color: #dc2626; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3); }
+        .chip.rm:hover { border-color: #dc2626; color: #dc2626; }
+        .chip.rm.on:hover { color: #fff; }
+
+        .danger-btn {
+            padding: 9px 18px;
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
+        }
+
+        .danger-btn:disabled, .update-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .dialog-msg {
+            display: none;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 14px;
+            font-weight: 500;
+        }
+
+        .dialog-msg.show { display: block; }
+        .dialog-msg.ok { background: #e7f8ee; color: #14653a; border: 1px solid #86d9a6; }
+        .dialog-msg.err { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        .dialog-msg.info { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+
+        .hint-text { font-size: 12px; color: var(--text-tertiary); margin-bottom: 14px; }
     </style>
 </head>
 
@@ -1346,6 +1484,9 @@
                     </div>
                     <div class="table-header-actions">
                         <span class="live-status"><span class="live-dot"></span><span id="lastUpdated"></span></span>
+                        <button class="manage-btn admin-only" onclick="openManageModal()">
+                            <i class="bi bi-sliders"></i> Manage Sections
+                        </button>
                         <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">
                             <i class="bi bi-arrow-clockwise"></i> Refresh
                         </button>
@@ -1422,6 +1563,62 @@
                     <button class="update-btn" id="exportConfirmBtn" onclick="confirmExport()">
                         <i class="bi bi-download"></i> Export Image
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Sections Dialog (admin only) -->
+    <div class="modal-overlay" id="manageModal" onclick="if (event.target === this) closeManageModal()">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="manageModalTitle">
+            <div class="modal-head">
+                <div>
+                    <h2 id="manageModalTitle">Manage Sections</h2>
+                    <p>Add a new section to a grade or remove sections that no longer exist</p>
+                </div>
+                <button class="modal-close" onclick="closeManageModal()" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-row">
+                    <button class="tab-btn" id="tabAdd" onclick="setManageTab('add')"><i class="bi bi-plus-circle"></i> Add section</button>
+                    <button class="tab-btn remove" id="tabRemove" onclick="setManageTab('remove')"><i class="bi bi-trash3"></i> Remove sections</button>
+                </div>
+
+                <div id="panelAdd">
+                    <div class="field-row">
+                        <div class="field" style="max-width: 140px;">
+                            <label for="mgGrade">Grade</label>
+                            <input type="number" id="mgGrade" min="1" max="12" placeholder="5" oninput="onAddGradeInput()">
+                        </div>
+                        <div class="field">
+                            <label for="mgSuffix">Section letter</label>
+                            <input type="text" id="mgSuffix" maxlength="4" placeholder="L" autocomplete="off" oninput="onAddSuffixInput()">
+                        </div>
+                    </div>
+                    <div class="new-name-preview">
+                        <span>New section name</span>
+                        <strong id="mgPreview">&ndash;</strong>
+                    </div>
+                    <div class="existing-list" id="mgExisting"></div>
+                    <div class="hint-text">New sections start as <strong>Pending</strong>. A grade that doesn't exist yet (for example 7) is created automatically.</div>
+                </div>
+
+                <div id="panelRemove" style="display: none;">
+                    <div class="opt-title">Grade</div>
+                    <div class="chip-row" id="rmGradeRow" style="margin-bottom: 18px;"></div>
+                    <div class="opt-title"><span>Sections <small id="rmSelCount"></small></span></div>
+                    <div class="chip-row" id="rmSectionRow"></div>
+                    <div class="hint-text" style="margin-top: 14px;">Removing a section deletes its row, including its current status, from the Google Sheet.</div>
+                </div>
+
+                <div class="dialog-msg" id="manageMsg"></div>
+            </div>
+            <div class="modal-foot">
+                <div class="export-summary" id="manageSummary"></div>
+                <div class="modal-actions">
+                    <button class="btn-secondary" onclick="closeManageModal()">Close</button>
+                    <button class="update-btn" id="addConfirmBtn" onclick="submitAddSection()"><i class="bi bi-plus-lg"></i> Add Section</button>
+                    <button class="danger-btn" id="removeConfirmBtn" onclick="submitRemoveSections()" style="display: none;"><i class="bi bi-trash3"></i> Remove Selected</button>
                 </div>
             </div>
         </div>
@@ -1523,6 +1720,246 @@
             }
         });
 
+        // ===== Manage sections (admin only) =====
+        function isAdmin() {
+            return !!currentUser && String(currentUser.role || '').toLowerCase() === 'admin';
+        }
+
+        // Keeps the Grade filter in step with the grades that really exist in the sheet
+        function syncGradeFilter() {
+            const sel = document.getElementById('gradeFilter');
+            const previous = sel.value;
+            const grades = [...new Set(allData.map(i => String(i.grade)))].sort((a, b) => a - b);
+            sel.innerHTML = '<option value="all">All Grades</option>' +
+                grades.map(g => '<option value="' + g + '">Grade ' + g + '</option>').join('');
+            sel.value = grades.includes(previous) ? previous : 'all';
+        }
+
+        // Sends a POST to Apps Script. If the browser blocks reading the reply,
+        // checks the sheet itself to see whether the change went through.
+        async function postJson(payload, verify) {
+            const body = JSON.stringify(payload);
+            const headers = { 'Content-Type': 'text/plain;charset=utf-8' };
+            try {
+                const response = await fetch(WEB_APP_URL, { method: 'POST', headers: headers, body: body });
+                return await response.json();
+            } catch (netErr) {
+                if (!verify) throw netErr;
+                let fresh = await fetchData(dataUrl());
+                if (fresh && fresh.success && verify(fresh.data)) return { success: true, verified: true };
+                await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', headers: headers, body: body });
+                await new Promise(r => setTimeout(r, 1500));
+                fresh = await fetchData(dataUrl());
+                if (fresh && fresh.success && verify(fresh.data)) return { success: true, verified: true };
+                throw netErr;
+            }
+        }
+
+        let manageTab = 'add';
+        let rmGrade = null;
+        let rmSel = new Set();
+        let suffixTouched = false;
+
+        function showManageMsg(type, text) {
+            const el = document.getElementById('manageMsg');
+            if (!text) { el.className = 'dialog-msg'; el.textContent = ''; return; }
+            el.className = 'dialog-msg show ' + type;
+            el.textContent = text;
+        }
+
+        function openManageModal() {
+            if (!isAdmin()) return;
+            manageTab = 'add';
+            rmGrade = null;
+            rmSel = new Set();
+            suffixTouched = false;
+            document.getElementById('mgGrade').value = '';
+            document.getElementById('mgSuffix').value = '';
+            showManageMsg('', '');
+            renderManage();
+            document.getElementById('manageModal').classList.add('show');
+        }
+
+        function closeManageModal() {
+            document.getElementById('manageModal').classList.remove('show');
+        }
+
+        function setManageTab(tab) {
+            manageTab = tab;
+            showManageMsg('', '');
+            renderManage();
+        }
+
+        function sectionsOfGrade(g) {
+            return allData
+                .filter(i => String(i.grade) === String(g))
+                .map(i => String(i.section))
+                .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        }
+
+        function suggestSuffix(grade) {
+            const used = sectionsOfGrade(grade).map(s => s.toUpperCase().slice(String(grade).length));
+            for (let c = 65; c <= 90; c++) {
+                const letter = String.fromCharCode(c);
+                if (!used.includes(letter)) return letter;
+            }
+            return '';
+        }
+
+        function newSectionName() {
+            const g = parseInt(document.getElementById('mgGrade').value, 10);
+            const suffix = document.getElementById('mgSuffix').value.trim().toUpperCase();
+            if (!g || !suffix) return '';
+            return g + suffix;
+        }
+
+        function onAddGradeInput() {
+            const g = parseInt(document.getElementById('mgGrade').value, 10);
+            if (g && !suffixTouched) document.getElementById('mgSuffix').value = suggestSuffix(g);
+            showManageMsg('', '');
+            renderManage();
+        }
+
+        function onAddSuffixInput() {
+            const inp = document.getElementById('mgSuffix');
+            inp.value = inp.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            suffixTouched = true;
+            showManageMsg('', '');
+            renderManage();
+        }
+
+        function validateNewSection() {
+            const g = parseInt(document.getElementById('mgGrade').value, 10);
+            const suffix = document.getElementById('mgSuffix').value.trim().toUpperCase();
+            if (!g || g < 1 || g > 12) return 'Enter a grade between 1 and 12.';
+            if (!/^[A-Z][A-Z0-9]{0,3}$/.test(suffix)) return 'Enter the section letter, for example L.';
+            const name = g + suffix;
+            if (allData.some(i => String(i.section).toUpperCase() === name)) return 'Section ' + name + ' already exists.';
+            return '';
+        }
+
+        function renderManage() {
+            const isAdd = manageTab === 'add';
+            document.getElementById('tabAdd').className = 'tab-btn' + (isAdd ? ' on' : '');
+            document.getElementById('tabRemove').className = 'tab-btn remove' + (!isAdd ? ' on' : '');
+            document.getElementById('panelAdd').style.display = isAdd ? 'block' : 'none';
+            document.getElementById('panelRemove').style.display = isAdd ? 'none' : 'block';
+            document.getElementById('addConfirmBtn').style.display = isAdd ? 'flex' : 'none';
+            document.getElementById('removeConfirmBtn').style.display = isAdd ? 'none' : 'flex';
+
+            const summary = document.getElementById('manageSummary');
+
+            if (isAdd) {
+                const name = newSectionName();
+                document.getElementById('mgPreview').textContent = name || '\u2013';
+                const g = parseInt(document.getElementById('mgGrade').value, 10);
+                const existing = g ? sectionsOfGrade(g) : [];
+                document.getElementById('mgExisting').innerHTML = g
+                    ? (existing.length
+                        ? 'Grade ' + g + ' currently has: ' + existing.map(s => '<span>' + s + '</span>').join('')
+                        : 'Grade ' + g + ' has no sections yet. It will be created.')
+                    : '';
+                const err = name ? validateNewSection() : 'x';
+                document.getElementById('addConfirmBtn').disabled = !!err;
+                summary.innerHTML = name && !err ? 'Ready to add <strong>' + name + '</strong>' : '';
+                if (name && err && err !== 'x') summary.innerHTML = '<span style="color:#dc2626">' + err + '</span>';
+            } else {
+                const grades = [...new Set(allData.map(i => i.grade))].sort((a, b) => a - b);
+                const gradeRow = document.getElementById('rmGradeRow');
+                gradeRow.innerHTML = '';
+                grades.forEach(g => {
+                    const btn = document.createElement('button');
+                    btn.className = 'chip' + (String(rmGrade) === String(g) ? ' on' : '');
+                    btn.innerHTML = 'Grade ' + g + '<span class="cnt">' + sectionsOfGrade(g).length + '</span>';
+                    btn.onclick = () => { rmGrade = g; rmSel = new Set(); showManageMsg('', ''); renderManage(); };
+                    gradeRow.appendChild(btn);
+                });
+
+                const secRow = document.getElementById('rmSectionRow');
+                secRow.innerHTML = '';
+                if (rmGrade === null) {
+                    secRow.innerHTML = '<span class="hint-text" style="margin:0">Choose a grade first.</span>';
+                } else {
+                    sectionsOfGrade(rmGrade).forEach(sec => {
+                        const btn = document.createElement('button');
+                        btn.className = 'chip rm' + (rmSel.has(sec) ? ' on' : '');
+                        btn.innerHTML = (rmSel.has(sec) ? '<i class="bi bi-trash3"></i> ' : '') + sec;
+                        btn.onclick = () => {
+                            if (rmSel.has(sec)) rmSel.delete(sec); else rmSel.add(sec);
+                            renderManage();
+                        };
+                        secRow.appendChild(btn);
+                    });
+                }
+                document.getElementById('rmSelCount').textContent = rmSel.size ? '\u00B7 ' + rmSel.size + ' selected' : '';
+                document.getElementById('removeConfirmBtn').disabled = rmSel.size === 0;
+                summary.innerHTML = rmSel.size ? 'Will remove <strong>' + [...rmSel].join(', ') + '</strong>' : '';
+            }
+        }
+
+        async function submitAddSection() {
+            const err = validateNewSection();
+            if (err) { showManageMsg('err', err); return; }
+            const grade = parseInt(document.getElementById('mgGrade').value, 10);
+            const name = newSectionName();
+            const btn = document.getElementById('addConfirmBtn');
+            const html = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Adding...';
+            showManageMsg('info', 'Adding ' + name + '...');
+            try {
+                const result = await postJson(
+                    { user_id: currentUser.userId, action: 'addSection', grade: grade, section: name },
+                    rows => rows.some(r => String(r.section).toUpperCase() === name)
+                );
+                if (result && result.success) {
+                    await refreshData(true);
+                    suffixTouched = false;
+                    document.getElementById('mgSuffix').value = suggestSuffix(grade);
+                    showManageMsg('ok', 'Section ' + name + ' was added to Grade ' + grade + '.');
+                } else {
+                    showManageMsg('err', (result && result.error) || 'Could not add the section.');
+                }
+            } catch (e) {
+                showManageMsg('err', 'Could not reach the server. Please try again.');
+            } finally {
+                btn.innerHTML = html;
+                renderManage();
+            }
+        }
+
+        async function submitRemoveSections() {
+            const list = [...rmSel];
+            if (!list.length) return;
+            const ok = confirm('Remove ' + list.join(', ') + ' from the tracker?\n\nThis deletes the row' + (list.length > 1 ? 's' : '') + ' from the Google Sheet, including the current status. This cannot be undone from here.');
+            if (!ok) return;
+            const btn = document.getElementById('removeConfirmBtn');
+            const html = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Removing...';
+            showManageMsg('info', 'Removing ' + list.join(', ') + '...');
+            try {
+                const upper = list.map(s => s.toUpperCase());
+                const result = await postJson(
+                    { user_id: currentUser.userId, action: 'removeSections', sections: list },
+                    rows => !rows.some(r => upper.includes(String(r.section).toUpperCase()))
+                );
+                if (result && result.success) {
+                    await refreshData(true);
+                    rmSel = new Set();
+                    if (rmGrade !== null && sectionsOfGrade(rmGrade).length === 0) rmGrade = null;
+                    showManageMsg('ok', 'Removed ' + list.join(', ') + '.');
+                } else {
+                    showManageMsg('err', (result && result.error) || 'Could not remove the sections.');
+                }
+            } catch (e) {
+                showManageMsg('err', 'Could not reach the server. Please try again.');
+            } finally {
+                btn.innerHTML = html;
+                renderManage();
+            }
+        }
+
         const AUTO_REFRESH_MS = 60000;
         let autoRefreshTimer = null;
 
@@ -1546,6 +1983,7 @@
             document.getElementById('logoutLabel').textContent = user.guest ? 'Exit Guest' : 'Logout';
             document.getElementById('lastUpdated').textContent = '';
             document.querySelector('[data-view="tracker"]').classList.toggle('viewer-mode', isViewer());
+            document.querySelector('[data-view="tracker"]').classList.toggle('admin-mode', isAdmin());
             document.querySelector('[data-view="login"]').classList.remove('active');
             document.querySelector('[data-view="tracker"]').classList.add('active');
             loadData();
@@ -1561,7 +1999,8 @@
             // Viewers can't edit, so it is safe to refresh their table in the background
             if (!isViewer()) return;
             autoRefreshTimer = setInterval(() => {
-                const modalOpen = document.getElementById('exportModal').classList.contains('show');
+                const modalOpen = document.getElementById('exportModal').classList.contains('show') ||
+                    document.getElementById('manageModal').classList.contains('show');
                 if (!document.hidden && !modalOpen) refreshData(true);
             }, AUTO_REFRESH_MS);
         }
@@ -1594,6 +2033,7 @@
                 const result = await fetchData(dataUrl());
                 if (result && result.success) {
                     allData = result.data;
+                    syncGradeFilter();
                     applyFilters();
                     markUpdated(false);
                 } else if (!silent) {
@@ -1621,7 +2061,8 @@
             document.getElementById('gradeFilter').value = 'all';
             document.getElementById('statusFilter').value = 'all';
             document.getElementById('exportModal').classList.remove('show');
-            document.querySelector('[data-view="tracker"]').classList.remove('active', 'viewer-mode');
+            document.querySelector('[data-view="tracker"]').classList.remove('active', 'viewer-mode', 'admin-mode');
+            document.getElementById('manageModal').classList.remove('show');
             document.querySelector('[data-view="login"]').classList.add('active');
         }
 
@@ -1634,9 +2075,9 @@
                 const result = await fetchData(dataUrl());
                 if (result && result.success) {
                     allData = result.data;
+                    syncGradeFilter();
                     filteredData = [...allData];
-                    updateStats();
-                    renderTable();
+                    applyFilters();
                     markUpdated(false);
                 } else {
                     alert('Error loading data: ' + (result && result.error ? result.error : 'Unknown error'));
@@ -1708,7 +2149,9 @@
             button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Updating...';
 
             try {
-                const payload = JSON.stringify({ user_id: currentUser.userId, rowIndex: rowIndex, status: newStatus });
+                const current = allData.find(i => i.rowIndex === rowIndex);
+                const sectionName = current ? current.section : undefined;
+                const payload = JSON.stringify({ user_id: currentUser.userId, action: 'updateStatus', rowIndex: rowIndex, section: sectionName, status: newStatus });
                 let result;
                 try {
                     // text/plain avoids the CORS preflight that Apps Script cannot answer
@@ -1722,7 +2165,7 @@
                     // Fallback: send blindly, then confirm by re-reading the sheet
                     await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: payload });
                     const fresh = await fetchData(WEB_APP_URL + '?user_id=' + encodeURIComponent(currentUser.userId));
-                    const row = fresh && fresh.success ? fresh.data.find(r => r.rowIndex === rowIndex) : null;
+                    const row = fresh && fresh.success ? fresh.data.find(r => r.section === sectionName) : null;
                     if (row && row.status === newStatus) {
                         result = { success: true, data: row };
                     } else {
@@ -1898,7 +2341,7 @@
         }
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeExportModal();
+            if (e.key === 'Escape') { closeExportModal(); closeManageModal(); }
         });
 
         async function confirmExport() {
