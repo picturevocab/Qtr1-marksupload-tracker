@@ -910,6 +910,168 @@
             .brand-logo { width: 48px; }
             .topbar-title h1 { font-size: 18px; }
         }
+
+        /* ===== Export dialog ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(6, 47, 110, 0.45);
+            backdrop-filter: blur(3px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            width: 100%;
+            max-width: 600px;
+            max-height: calc(100vh - 32px);
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 25px 60px -10px rgba(6, 47, 110, 0.5);
+            border-top: 5px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: fadeUp 0.25s ease both;
+        }
+
+        .modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 18px 24px;
+            background: linear-gradient(180deg, var(--primary-soft) 0%, #fff 100%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-head h2 { font-size: 18px; color: var(--primary-dark); }
+        .modal-head p { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+        .modal-close {
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--border);
+            background: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .modal-close:hover { background: #fef2f2; color: var(--danger); border-color: #fecaca; }
+
+        .modal-body { padding: 20px 24px; overflow-y: auto; }
+
+        .opt-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--primary-dark);
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .opt-title small {
+            text-transform: none;
+            letter-spacing: 0;
+            font-weight: 500;
+            color: var(--text-tertiary);
+            font-size: 12px;
+        }
+
+        .opt-block { margin-bottom: 22px; }
+
+        .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        .chip {
+            padding: 7px 13px;
+            border: 1.5px solid var(--border);
+            background: #fff;
+            border-radius: 20px;
+            font-size: 12.5px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+            line-height: 1.3;
+        }
+
+        .chip:hover { border-color: var(--primary); color: var(--primary); }
+
+        .chip.on {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(8, 72, 160, 0.25);
+        }
+
+        .chip.preset { background: var(--primary-soft); border-color: #c9d8ee; color: var(--primary-dark); }
+        .chip.preset:hover { background: #dce8f8; }
+        .chip.preset.on { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        .chip .cnt { font-weight: 500; opacity: 0.8; margin-left: 4px; }
+
+        .chip.disabled { opacity: 0.45; cursor: not-allowed; }
+
+        .grade-tools { display: flex; gap: 6px; }
+
+        .link-btn {
+            border: none;
+            background: none;
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            padding: 2px 4px;
+        }
+
+        .link-btn:hover { text-decoration: underline; }
+
+        .modal-foot {
+            padding: 14px 24px;
+            border-top: 1px solid var(--border);
+            background: #fafcff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .export-summary { font-size: 13px; color: var(--text-secondary); }
+        .export-summary strong { color: var(--primary-dark); }
+        .export-summary.warn { color: var(--danger); }
+
+        .modal-actions { display: flex; gap: 8px; margin-left: auto; }
+
+        .btn-secondary {
+            padding: 9px 16px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover { background: var(--bg); }
+
+        .modal-actions .update-btn { padding: 9px 18px; font-size: 13px; border-radius: 8px; }
     </style>
 </head>
 
@@ -1088,6 +1250,48 @@
 
             <div class="app-footer">
                 <strong>Al Rowad International School</strong> &middot; Quarter Marks Upload Tracker
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Options Dialog -->
+    <div class="modal-overlay" id="exportModal" onclick="if (event.target === this) closeExportModal()">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="exportModalTitle">
+            <div class="modal-head">
+                <div>
+                    <h2 id="exportModalTitle">Export as Image</h2>
+                    <p>Choose what to include in the report</p>
+                </div>
+                <button class="modal-close" onclick="closeExportModal()" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="opt-block">
+                    <div class="opt-title">Quick presets</div>
+                    <div class="chip-row" id="presetRow"></div>
+                </div>
+                <div class="opt-block">
+                    <div class="opt-title">
+                        <span>Grades <small id="gradeSelCount"></small></span>
+                        <span class="grade-tools">
+                            <button class="link-btn" onclick="exportSelectAllGrades(true)">Select all</button>
+                            <button class="link-btn" onclick="exportSelectAllGrades(false)">Clear</button>
+                        </span>
+                    </div>
+                    <div class="chip-row" id="gradeChipRow"></div>
+                </div>
+                <div class="opt-block" style="margin-bottom: 4px;">
+                    <div class="opt-title">Sections to show</div>
+                    <div class="chip-row" id="statusChipRow"></div>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <div class="export-summary" id="exportSummary"></div>
+                <div class="modal-actions">
+                    <button class="btn-secondary" onclick="closeExportModal()">Cancel</button>
+                    <button class="update-btn" id="exportConfirmBtn" onclick="confirmExport()">
+                        <i class="bi bi-download"></i> Export Image
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1330,29 +1534,200 @@
             }
         }
 
-        async function exportImage() {
-            const exportBtn = event.target.closest('button');
-            const originalHTML = exportBtn.innerHTML;
-            exportBtn.disabled = true;
-            exportBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Generating...';
+        // ===== Export dialog =====
+        const EXPORT_STATUS_OPTIONS = [
+            { key: 'all', label: 'All sections' },
+            { key: 'Completed', label: 'Completed only' },
+            { key: 'Pending', label: 'Pending only' },
+            { key: 'In Progress', label: 'In Progress only' },
+            { key: 'NotCompleted', label: 'Not completed (Pending + In Progress)' }
+        ];
+
+        let exportSel = { grades: new Set(), status: 'all' };
+
+        function exportAllGrades() {
+            return [...new Set(allData.map(i => i.grade))].sort((a, b) => a - b);
+        }
+
+        function gradeStats(grade) {
+            const secs = allData.filter(i => i.grade == grade);
+            return {
+                total: secs.length,
+                completed: secs.filter(s => s.status === 'Completed').length,
+                pending: secs.filter(s => s.status === 'Pending').length,
+                inProgress: secs.filter(s => s.status === 'In Progress').length
+            };
+        }
+
+        function statusMatches(status, mode) {
+            if (mode === 'all') return true;
+            if (mode === 'NotCompleted') return status !== 'Completed';
+            return status === mode;
+        }
+
+        function exportPresets() {
+            const all = exportAllGrades();
+            const full = all.filter(g => { const s = gradeStats(g); return s.total > 0 && s.completed === s.total; });
+            const withPending = all.filter(g => gradeStats(g).pending > 0);
+            const incomplete = all.filter(g => { const s = gradeStats(g); return s.completed < s.total; });
+            return [
+                { label: 'Everything', grades: all, status: 'all' },
+                { label: 'All completed sections', grades: all, status: 'Completed' },
+                { label: 'All pending sections', grades: all, status: 'Pending' },
+                { label: 'All in-progress sections', grades: all, status: 'In Progress' },
+                { label: 'Fully completed grades', grades: full, status: 'all', count: full.length },
+                { label: 'Grades with pending', grades: withPending, status: 'all', count: withPending.length },
+                { label: 'Incomplete grades', grades: incomplete, status: 'all', count: incomplete.length }
+            ];
+        }
+
+        function sameSet(set, arr) {
+            return set.size === arr.length && arr.every(g => set.has(g));
+        }
+
+        function getExportSections() {
+            const base = allData.filter(i => exportSel.grades.has(i.grade));
+            const shown = base.filter(i => statusMatches(i.status, exportSel.status));
+            return { base, shown };
+        }
+
+        function renderExportModal() {
+            const all = exportAllGrades();
+
+            // presets
+            const presetRow = document.getElementById('presetRow');
+            presetRow.innerHTML = '';
+            exportPresets().forEach(p => {
+                const btn = document.createElement('button');
+                const disabled = p.grades.length === 0;
+                const active = !disabled && exportSel.status === p.status && sameSet(exportSel.grades, p.grades);
+                btn.className = 'chip preset' + (active ? ' on' : '') + (disabled ? ' disabled' : '');
+                btn.innerHTML = p.label + (p.count !== undefined ? '<span class="cnt">(' + p.count + ')</span>' : '');
+                if (!disabled) {
+                    btn.onclick = () => {
+                        exportSel = { grades: new Set(p.grades), status: p.status };
+                        renderExportModal();
+                    };
+                }
+                presetRow.appendChild(btn);
+            });
+
+            // grades
+            const gradeRow = document.getElementById('gradeChipRow');
+            gradeRow.innerHTML = '';
+            all.forEach(g => {
+                const st = gradeStats(g);
+                const btn = document.createElement('button');
+                btn.className = 'chip' + (exportSel.grades.has(g) ? ' on' : '');
+                btn.innerHTML = 'Grade ' + g + '<span class="cnt">' + st.completed + '/' + st.total + '</span>';
+                btn.onclick = () => {
+                    if (exportSel.grades.has(g)) exportSel.grades.delete(g); else exportSel.grades.add(g);
+                    renderExportModal();
+                };
+                gradeRow.appendChild(btn);
+            });
+            document.getElementById('gradeSelCount').textContent =
+                '· ' + exportSel.grades.size + ' of ' + all.length + ' selected · numbers show completed / total';
+
+            // status
+            const statusRow = document.getElementById('statusChipRow');
+            statusRow.innerHTML = '';
+            EXPORT_STATUS_OPTIONS.forEach(o => {
+                const btn = document.createElement('button');
+                btn.className = 'chip' + (exportSel.status === o.key ? ' on' : '');
+                btn.textContent = o.label;
+                btn.onclick = () => { exportSel.status = o.key; renderExportModal(); };
+                statusRow.appendChild(btn);
+            });
+
+            // summary
+            const { shown } = getExportSections();
+            const gradesShown = new Set(shown.map(i => i.grade)).size;
+            const summary = document.getElementById('exportSummary');
+            const confirmBtn = document.getElementById('exportConfirmBtn');
+            if (shown.length === 0) {
+                summary.className = 'export-summary warn';
+                summary.textContent = 'Nothing matches this selection.';
+                confirmBtn.disabled = true;
+            } else {
+                summary.className = 'export-summary';
+                summary.innerHTML = 'Will export <strong>' + shown.length + ' section' + (shown.length !== 1 ? 's' : '') +
+                    '</strong> across <strong>' + gradesShown + ' grade' + (gradesShown !== 1 ? 's' : '') + '</strong>';
+                confirmBtn.disabled = false;
+            }
+        }
+
+        function exportSelectAllGrades(selectAll) {
+            exportSel.grades = new Set(selectAll ? exportAllGrades() : []);
+            renderExportModal();
+        }
+
+        function exportImage() {
+            if (!allData.length) {
+                alert('No data loaded yet.');
+                return;
+            }
+            // Default the dialog to the filters currently applied on the page
+            const gradeSel = document.getElementById('gradeFilter').value;
+            const statusSel = document.getElementById('statusFilter').value;
+            const all = exportAllGrades();
+            exportSel = {
+                grades: new Set(gradeSel === 'all' ? all : all.filter(g => String(g) === gradeSel)),
+                status: statusSel
+            };
+            if (!exportSel.grades.size) exportSel.grades = new Set(all);
+            renderExportModal();
+            document.getElementById('exportModal').classList.add('show');
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('show');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeExportModal();
+        });
+
+        async function confirmExport() {
+            const { base, shown } = getExportSections();
+            if (!shown.length) return;
+            const btn = document.getElementById('exportConfirmBtn');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Generating...';
+            try {
+                await runExport(base, shown, exportSel.grades, exportSel.status);
+                closeExportModal();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        }
+
+        async function runExport(base, shown, gradeSet, statusMode) {
 
             const SCHOOL = 'Al Rowad International School';
             const now = new Date();
             const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
             const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-            const total = filteredData.length;
-            const completed = filteredData.filter(i => i.status === 'Completed').length;
-            const pending = filteredData.filter(i => i.status === 'Pending').length;
-            const inProgress = filteredData.filter(i => i.status === 'In Progress').length;
+            // Summary numbers always describe the selected grades in full,
+            // so the completion % stays meaningful even when only some statuses are shown.
+            const total = base.length;
+            const completed = base.filter(i => i.status === 'Completed').length;
+            const pending = base.filter(i => i.status === 'Pending').length;
+            const inProgress = base.filter(i => i.status === 'In Progress').length;
             const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-            const gradeSel = document.getElementById('gradeFilter').value;
-            const statusSel = document.getElementById('statusFilter').value;
-            const filterBits = [];
-            if (gradeSel !== 'all') filterBits.push('Grade ' + gradeSel);
-            if (statusSel !== 'all') filterBits.push(statusSel);
-            const filterLabel = filterBits.length ? filterBits.join(' · ') : 'All Grades · All Status';
+            const allGradeCount = new Set(allData.map(i => i.grade)).size;
+            const selGrades = [...gradeSet].sort((a, b) => a - b);
+            const gradeLabel = selGrades.length === allGradeCount
+                ? 'All Grades'
+                : (selGrades.length === 1 ? 'Grade ' + selGrades[0] : 'Grades ' + selGrades.join(', '));
+            const statusLabels = { all: 'All Sections', Completed: 'Completed Only', Pending: 'Pending Only', 'In Progress': 'In Progress Only', NotCompleted: 'Not Completed' };
+            const scopeLabel = gradeLabel + ' · ' + statusLabels[statusMode];
+            const fileScope = (selGrades.length === allGradeCount ? 'AllGrades' : 'G' + selGrades.join('-G')) +
+                (statusMode === 'all' ? '' : '_' + statusMode.replace(/\s+/g, ''));
 
             const styles = {
                 Completed: { bg: '#e7f8ee', border: '#86d9a6', color: '#14653a', icon: 'bi-check-circle-fill', iconColor: '#16a34a' },
@@ -1360,15 +1735,19 @@
                 Pending: { bg: '#fff4de', border: '#f6c76b', color: '#8a4b05', icon: 'bi-exclamation-circle-fill', iconColor: '#f08830' }
             };
 
-            const grades = [...new Set(filteredData.map(i => i.grade))].sort((a, b) => a - b);
+            const grades = [...new Set(shown.map(i => i.grade))].sort((a, b) => a - b);
 
             const gradeHTML = grades.map(grade => {
-                const sections = filteredData
+                const sections = shown
                     .filter(i => i.grade == grade)
                     .sort((a, b) => a.section.localeCompare(b.section, undefined, { numeric: true }));
-                const done = sections.filter(s => s.status === 'Completed').length;
-                const pct = sections.length ? Math.round((done / sections.length) * 100) : 0;
-                const allDone = done === sections.length;
+                const gradeAll = base.filter(i => i.grade == grade);
+                const done = gradeAll.filter(s => s.status === 'Completed').length;
+                const pct = gradeAll.length ? Math.round((done / gradeAll.length) * 100) : 0;
+                const allDone = done === gradeAll.length;
+                const countLabel = sections.length === gradeAll.length
+                    ? sections.length + ' section' + (sections.length !== 1 ? 's' : '')
+                    : 'Showing ' + sections.length + ' of ' + gradeAll.length;
 
                 const chips = sections.map(s => {
                     const st = styles[s.status] || styles.Pending;
@@ -1384,13 +1763,13 @@
                         <div style="display:flex; align-items:center; justify-content:space-between; padding:11px 18px; background:#eaf1fb; border-bottom:1px solid #cfdcf0;">
                             <div style="display:flex; align-items:center; gap:10px;">
                                 <span style="background:#0848a0; color:#fff; font-weight:800; font-size:13px; letter-spacing:0.6px; padding:5px 12px; border-radius:7px;">GRADE ${grade}</span>
-                                <span style="color:#475569; font-size:12px; font-weight:600;">${sections.length} section${sections.length !== 1 ? 's' : ''}</span>
+                                <span style="color:#475569; font-size:12px; font-weight:600;">${countLabel}</span>
                             </div>
                             <div style="display:flex; align-items:center; gap:12px;">
                                 <div style="width:140px; height:8px; background:#cfdcf0; border-radius:8px; overflow:hidden;">
                                     <div style="width:${pct}%; height:8px; background:${allDone ? '#16a34a' : '#0848a0'}; border-radius:8px;"></div>
                                 </div>
-                                <span style="font-size:12px; font-weight:700; color:${allDone ? '#14653a' : '#062f6e'}; min-width:92px; text-align:right;">${done}/${sections.length} Completed</span>
+                                <span style="font-size:12px; font-weight:700; color:${allDone ? '#14653a' : '#062f6e'}; min-width:92px; text-align:right;">${done}/${gradeAll.length} Completed</span>
                             </div>
                         </div>
                         <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:9px; padding:14px 16px;">
@@ -1428,6 +1807,7 @@
                                     <div style="font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#ffc27a; margin-bottom:4px;">Marks Submission Status Report</div>
                                     <h1 style="font-size:28px; font-weight:800; margin:0; letter-spacing:-0.3px; line-height:1.2;">${SCHOOL}</h1>
                                     <div style="font-size:16px; font-weight:500; margin-top:4px; opacity:0.95;">Quarter Marks Upload Tracker</div>
+                                    <div style="display:inline-block; margin-top:9px; padding:4px 12px; background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.35); border-radius:20px; font-size:12px; font-weight:600; letter-spacing:0.3px;">${scopeLabel}</div>
                                 </div>
                             </div>
                             <div style="text-align:right; flex-shrink:0;">
@@ -1475,7 +1855,7 @@
 
                     <div style="background:#062f6e; color:#fff; padding:14px 28px; display:flex; align-items:center; justify-content:space-between; font-size:12px;">
                         <span style="font-weight:700; letter-spacing:0.4px;">${SCHOOL}</span>
-                        <span style="opacity:0.8;">Filter: ${filterLabel}</span>
+                        <span style="opacity:0.8;">Scope: ${scopeLabel}</span>
                         <span style="opacity:0.8;">Generated ${dateStr}, ${timeStr}</span>
                     </div>
                 </div>
@@ -1497,7 +1877,7 @@
                 });
 
                 const link = document.createElement('a');
-                link.download = `AIS_Quarter_Marks_Tracker_${now.toISOString().split('T')[0]}.png`;
+                link.download = `AIS_Quarter_Marks_${fileScope}_${now.toISOString().split('T')[0]}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             } catch (error) {
@@ -1505,8 +1885,6 @@
                 console.error(error);
             } finally {
                 document.body.removeChild(exportContainer);
-                exportBtn.disabled = false;
-                exportBtn.innerHTML = originalHTML;
             }
         }
     </script>
